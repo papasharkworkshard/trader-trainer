@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeUp — Тренажёр трейдера</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060608;--surface:#0c0c10;--card:#111116;--border:#1c1c24;
+  --bull:#00d48a;--bear:#ff4466;--yellow:#f5c842;--blue:#4488ff;--purple:#a855f7;
+  --text:#e0e0ee;--sub:#484860;--white:#ffffff;--radius:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 700px 400px at 20% 0%,rgba(0,212,138,.05) 0%,transparent 60%),
+             radial-gradient(ellipse 500px 600px at 80% 100%,rgba(255,68,102,.04) 0%,transparent 60%)}
+
+/* ── Хедер ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;
+  border-bottom:1px solid var(--border);background:rgba(6,6,8,.92);
+  backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+.brand{font-size:20px;font-weight:700;color:var(--white);letter-spacing:-.5px}
+.brand span{color:var(--bull)}
+.hdr-right{display:flex;align-items:center;gap:16px}
+.xp-chip{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;
+  font-size:13px;color:var(--yellow);background:rgba(245,200,66,.08);
+  border:1px solid rgba(245,200,66,.2);padding:4px 12px;border-radius:20px}
+.streak-chip{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--bear);
+  background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.15);
+  padding:4px 12px;border-radius:20px;font-family:'JetBrains Mono',monospace}
+
+/* ── Экраны ── */
+.screen{display:none}.screen.active{display:block}
+
+/* ── Карта уровней ── */
+.map-wrap{max-width:600px;margin:0 auto;padding:40px 20px}
+.map-title{font-size:28px;font-weight:700;color:var(--white);letter-spacing:-.5px;margin-bottom:6px}
+.map-sub{font-size:14px;color:var(--sub);margin-bottom:32px}
+.levels-list{display:grid;gap:12px}
+.level-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;display:flex;align-items:center;gap:16px;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.level-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
+.level-card.unlocked:hover{border-color:var(--sub);transform:translateY(-1px)}
+.level-card.unlocked:hover::before{opacity:.03;background:var(--white)}
+.level-card.locked{opacity:.5;cursor:not-allowed}
+.level-card.completed{border-color:rgba(0,212,138,.3)}
+.lv-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;flex-shrink:0}
+.lv-info{flex:1}
+.lv-name{font-size:15px;font-weight:600;color:var(--white);margin-bottom:3px}
+.lv-desc{font-size:12px;color:var(--sub)}
+.lv-right{text-align:right;flex-shrink:0}
+.lv-status{font-size:11px;font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.lv-bar{width:72px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.lv-fill{height:100%;border-radius:2px;transition:width .5s}
+
+/* ── Игровой экран ── */
+.game-wrap{max-width:640px;margin:0 auto;padding:28px 20px 60px}
+.game-top{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.back-btn{background:none;border:1px solid var(--border);color:var(--sub);
+  font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;transition:all .15s}
+.back-btn:hover{color:var(--text);border-color:var(--sub)}
+.game-lv-tag{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  padding:3px 10px;border-radius:4px}
+.q-counter{font-size:12px;color:var(--sub);font-family:'JetBrains Mono',monospace;margin-left:auto}
+
+/* Прогресс-бар вверху */
+.q-progress-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:24px;overflow:hidden}
+.q-progress-fill{height:100%;border-radius:2px;background:var(--bull);transition:width .4s ease}
+
+/* Теория */
+.theory-pill{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(68,136,255,.08);border:1px solid rgba(68,136,255,.2);
+  border-radius:20px;padding:6px 14px;font-size:12px;color:var(--blue);
+  cursor:pointer;margin-bottom:16px;transition:background .15s}
+.theory-pill:hover{background:rgba(68,136,255,.14)}
+.theory-box{background:var(--card);border:1px solid rgba(68,136,255,.2);
+  border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;
+  display:none;animation:fadeUp .25s ease}
+.theory-box.show{display:block}
+.theory-box p{font-size:13px;color:var(--sub);line-height:1.8;margin-bottom:8px}
+.theory-box p:last-child{margin-bottom:0}
+.theory-box strong{color:var(--text)}
+
+/* Стрик-точки */
+.streak-dots{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.sdot{width:24px;height:24px;border-radius:50%;background:var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+  transition:all .3s;font-family:'JetBrains Mono',monospace}
+.sdot.hit{background:var(--bull);color:#000}
+.sdot.miss{background:var(--bear);color:#fff}
+
+/* Арена */
+.arena{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:24px;margin-bottom:16px}
+.arena-visual{display:flex;align-items:center;justify-content:center;
+  min-height:180px;margin-bottom:20px;position:relative}
+.question-box{background:var(--surface);border-left:3px solid var(--yellow);
+  border-radius:8px;padding:14px 16px;font-size:15px;font-weight:500;
+  color:var(--white);margin-bottom:14px}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ans-btn{padding:13px 14px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:13px;font-weight:500;
+  font-family:'Space Grotesk',sans-serif;cursor:pointer;text-align:left;
+  transition:all .15s;line-height:1.4}
+.ans-btn:hover:not(.disabled){border-color:var(--sub);background:rgba(255,255,255,.03);transform:translateY(-1px)}
+.ans-btn.correct{border-color:var(--bull)!important;background:rgba(0,212,138,.1)!important;color:var(--bull)!important}
+.ans-btn.wrong{border-color:var(--bear)!important;background:rgba(255,68,102,.1)!important;color:var(--bear)!important}
+.ans-btn.disabled{pointer-events:none}
+
+/* Результат */
+.result-box{border-radius:10px;padding:16px 18px;margin-top:14px;display:none;animation:fadeUp .3s ease}
+.result-box.show{display:block}
+.result-box.ok{background:rgba(0,212,138,.07);border:1px solid rgba(0,212,138,.2)}
+.result-box.fail{background:rgba(255,68,102,.07);border:1px solid rgba(255,68,102,.2)}
+.result-title{font-size:14px;font-weight:700;margin-bottom:5px}
+.result-box.ok .result-title{color:var(--bull)}
+.result-box.fail .result-title{color:var(--bear)}
+.result-text{font-size:12px;color:var(--sub);line-height:1.7}
+
+/* Кнопка далее */
+.next-btn{width:100%;margin-top:14px;padding:15px;border-radius:12px;
+  background:var(--bull);color:#000;font-size:14px;font-weight:700;
+  font-family:'Space Grotesk',sans-serif;border:none;cursor:pointer;
+  display:none;transition:opacity .15s,transform .1s;letter-spacing:.3px}
+.next-btn.show{display:block}
+.next-btn:hover{opacity:.88;transform:translateY(-1px)}
+
+/* ── Финал уровня ── */
+.finish-wrap{max-width:480px;margin:60px auto;padding:0 20px;text-align:center;
+  animation:fadeUp .4s ease}
+.finish-emoji{font-size:60px;margin-bottom:16px}
+.finish-title{font-size:26px;font-weight:700;color:var(--white);margin-bottom:8px;letter-spacing:-.5px}
+.finish-sub{font-size:14px;color:var(--sub);margin-bottom:28px;line-height:1.6}
+.finish-stats{display:flex;justify-content:center;gap:28px;margin-bottom:32px}
+.fstat-val{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700}
+.fstat-lbl{font-size:10px;color:var(--sub);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+.finish-btns{display:flex;gap:10px;justify-content:center}
+.btn-primary{background:var(--bull);color:#000;font-size:14px;font-weight:700;
+  font-family:'Space Grotesk',sans-serif;padding:14px 28px;border-radius:10px;
+  border:none;cursor:pointer;transition:opacity .15s}
+.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--surface);color:var(--text);font-size:14px;
+  font-family:'Space Grotesk',sans-serif;padding:14px 28px;border-radius:10px;
+  border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.btn-secondary:hover{border-color:var(--sub)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+.pop{animation:pop .3s ease}
+
+/* SVG графики */
+.chart-svg{border-radius:8px;background:rgba(0,0,0,.3)}
+
+/* Адаптив */
+@media(max-width:500px){
+  .answers{grid-template-columns:1fr}
+  .finish-stats{gap:16px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Trade<span>Up</span></div>
+  <div class="hdr-right">
+    <div class="streak-chip">🔥 <span id="hdr-streak">0</span></div>
+    <div class="xp-chip">⚡ <span id="hdr-xp">0</span> XP</div>
+  </div>
+</header>
+
+<!-- ══ КАРТА УРОВНЕЙ ══ -->
+<div class="screen active" id="screen-map">
+<div class="map-wrap">
+  <div class="map-title">Твой путь трейдера</div>
+  <div class="map-sub">Пройди все уровни — от свечей до реальных сделок</div>
+  <div class="levels-list" id="levels-list"></div>
+</div>
+</div>
+
+<!-- ══ ИГРА ══ -->
+<div class="screen" id="screen-game">
+<div class="game-wrap">
+  <div class="game-top">
+    <button class="back-btn" onclick="goMap()">← Карта</button>
+    <div class="game-lv-tag" id="game-lv-tag"></div>
+    <div class="q-counter" id="q-counter"></div>
+  </div>
+  <div class="q-progress-bar"><div class="q-progress-fill" id="q-progress-fill"></div></div>
+
+  <div class="theory-pill" onclick="toggleTheory()">
+    📖 <span id="theory-toggle-txt">Показать теорию</span>
+  </div>
+  <div class="theory-box" id="theory-box"></div>
+
+  <div class="streak-dots" id="streak-dots"></div>
+
+  <div class="arena">
+    <div class="arena-visual" id="arena-visual"></div>
+    <div class="question-box" id="question-text"></div>
+    <div class="answers" id="answers-grid"></div>
+    <div class="result-box" id="result-box">
+      <div class="result-title" id="result-title"></div>
+      <div class="result-text" id="result-text"></div>
+    </div>
+  </div>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">Следующий →</button>
+</div>
+</div>
+
+<!-- ══ ФИНАЛ ══ -->
+<div class="screen" id="screen-finish">
+<div class="finish-wrap">
+  <div class="finish-emoji" id="finish-emoji">🏆</div>
+  <div class="finish-title" id="finish-title"></div>
+  <div class="finish-sub" id="finish-sub"></div>
+  <div class="finish-stats">
+    <div class="fstat"><div class="fstat-val" style="color:var(--bull)" id="fs-correct">0</div><div class="fstat-lbl">Правильно</div></div>
+    <div class="fstat"><div class="fstat-val" style="color:var(--yellow)" id="fs-xp">0</div><div class="fstat-lbl">XP</div></div>
+    <div class="fstat"><div class="fstat-val" style="color:var(--blue)" id="fs-pct">0%</div><div class="fstat-lbl">Точность</div></div>
+  </div>
+  <div class="finish-btns">
+    <button class="btn-secondary" onclick="restartLevel()">Повторить</button>
+    <button class="btn-primary" onclick="goMap()">На карту →</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// ДАННЫЕ — УРОВНИ И ВОПРОСЫ
+// ══════════════════════════════════════════
+
+const LEVELS = [
+  {
+    id: 0,
+    name: 'Японские свечи',
+    desc: 'Бычья/медвежья, тело, тени, доджи',
+    icon: '🕯️',
+    color: '#f5c842',
+    xpReward: 100,
+    theory: `<p><strong>Японская свеча</strong> показывает 4 цены за период: открытие, закрытие, максимум и минимум.</p>
+    <p><strong style="color:var(--bull)">Бычья (зелёная)</strong> — закрытие выше открытия. Покупатели победили.</p>
+    <p><strong style="color:var(--bear)">Медвежья (красная)</strong> — закрытие ниже открытия. Продавцы победили.</p>
+    <p><strong>Тени (фитили)</strong> — тонкие линии сверху и снизу. Показывают максимум и минимум периода.</p>
+    <p><strong>Доджи</strong> — открытие ≈ закрытие. Нерешительность рынка.</p>`,
+    questions: [
+      // Блок 1: бычья/медвежья (5 вопросов)
+      {candle:{o:90,c:140,h:155,l:75,bull:true},q:'Какая это свеча?',
+       a:['🟢 Бычья — цена выросла','🔴 Медвежья — цена упала','⬜ Нейтральная','❓ Невозможно определить'],correct:0,
+       exp:'Бычья: закрытие (140) выше открытия (90). Зелёный = рост.'},
+      {candle:{o:130,c:80,h:145,l:65,bull:false},q:'Определи тип свечи',
+       a:['🟢 Бычья','🔴 Медвежья','⬜ Доджи','📊 Неопределённая'],correct:1,
+       exp:'Медвежья: открытие 130, закрытие 80. Цена упала — продавцы победили.'},
+      {candle:{o:100,c:100,h:140,l:60,bull:true},q:'Открытие и закрытие на одном уровне. Это...',
+       a:['Бычья с маленьким телом','Медвежья','Доджи — нерешительность','Марибозу'],correct:2,
+       exp:'Доджи! Открытие = закрытие. Ни быки ни медведи не взяли контроль. Сигнал разворота.'},
+      {candle:{o:95,c:160,h:165,l:90,bull:true},q:'Длинное зелёное тело, маленькие тени. Что это говорит?',
+       a:['Сильный бычий импульс','Слабый рост','Разворот вниз','Консолидация'],correct:0,
+       exp:'Длинное тело без теней = марибозу. Покупатели полностью контролировали период. Очень сильный сигнал.'},
+      {candle:{o:150,c:95,h:158,l:88,bull:false},q:'Свеча красная, тело большое. Куда шла цена?',
+       a:['Вверх','Вниз','Никуда','Сначала вверх потом вниз'],correct:1,
+       exp:'Вниз. Открылась на 150, закрылась на 95. Продавцы доминировали весь период.'},
+      // Блок 2: тени (5 вопросов)
+      {candle:{o:100,c:120,h:165,l:95,bull:true},q:'Длинная тень сверху означает...',
+       a:['Цена пыталась расти но откатила','Большой объём','Открытие было высоко','Ошибка данных'],correct:0,
+       exp:'Верно! Цена поднималась до 165 но медведи продавили её вниз. Длинная верхняя тень = отбой от верхов.'},
+      {candle:{o:110,c:95,h:115,l:55,bull:false},q:'Длинная тень снизу у медвежьей свечи говорит...',
+       a:['Продавцы очень сильны','Покупатели отбили часть падения','Тренд продолжится вниз','Объём низкий'],correct:1,
+       exp:'Цена падала до 55 но быки выкупили. Закрылась на 95. Длинная нижняя тень = покупатели присутствуют.'},
+      {candle:{o:100,c:102,h:150,l:98,bull:true},q:'Маленькое тело, огромные тени с обеих сторон. Рынок...',
+       a:['Очень волатильный и нерешительный','Спокойный','Готов расти','Готов падать'],correct:0,
+       exp:'Высокая волатильность + нерешительность. Цена гуляла от 98 до 150, но вернулась почти к открытию.'},
+      {candle:{o:120,c:119,h:128,l:115,bull:false},q:'Маленькое тело и короткие тени. Что это значит?',
+       a:['Сильный тренд','Рынок в консолидации — нет решительности','Разворот','Ложный сигнал'],correct:1,
+       exp:'Маленькое тело + короткие тени = рынок стоит на месте. Жди выхода в одну из сторон.'},
+      {candle:{o:100,c:140,h:142,l:85,bull:true},q:'Тело большое, тень снизу длинная, тени сверху почти нет. Это...',
+       a:['Медвежий молот','Бычья свеча с выкупом дна','Доджи','Нейтральная'],correct:1,
+       exp:'Цена падала до 85 (выкуп дна), затем быки закрыли период высоко. Сильный бычий сигнал.'},
+      // Блок 3: определи элемент (5 вопросов)
+      {candle:{o:100,c:130,h:145,l:90,bull:true},q:'Цена максимума этой свечи — это...',
+       a:['90','100','130','145'],correct:3,
+       exp:'Максимум — самая высокая точка тени сверху. Здесь это 145.'},
+      {candle:{o:120,c:80,h:130,l:70,bull:false},q:'Цена закрытия медвежьей свечи — это...',
+       a:['120 (верх тела)','80 (низ тела)','130 (максимум)','70 (минимум)'],correct:1,
+       exp:'У медвежьей свечи закрытие НИЖЕ открытия. Низ тела = цена закрытия = 80.'},
+      {candle:{o:95,c:135,h:140,l:85,bull:true},q:'Тело свечи — это расстояние между...',
+       a:['Максимумом и минимумом','Открытием и закрытием','Тенями','Верхом и низом'],correct:1,
+       exp:'Тело = расстояние между открытием и закрытием. Тени показывают максимум/минимум периода.'},
+      {candle:{o:110,c:90,h:120,l:80,bull:false},q:'У медвежьей свечи открытие находится...',
+       a:['Внизу тела','Вверху тела','На уровне максимума','На уровне минимума'],correct:1,
+       exp:'У медвежьей свечи: открытие вверху тела, закрытие внизу. У бычьей — наоборот.'},
+      {candle:{o:100,c:100,h:130,l:70,bull:true},q:'Почему тело этой свечи очень маленькое?',
+       a:['Мало объёма','Открытие и закрытие почти одинаковы','Это ошибка','Цена не двигалась'],correct:1,
+       exp:'Тело = разница между открытием и закрытием. Если они близко — тело маленькое. Это доджи.'},
+    ]
+  },
+  {
+    id: 1,
+    name: 'Паттерны одной свечи',
+    desc: 'Молот, марибозу, доджи, пинбар',
+    icon: '🔨',
+    color: '#00d48a',
+    xpReward: 150,
+    theory: `<p><strong>Молот</strong> — маленькое тело сверху, длинная тень снизу (≥2x тело). После падения = сигнал разворота вверх.</p>
+    <p><strong>Перевёрнутый молот</strong> — маленькое тело снизу, длинная тень сверху. После падения = возможный разворот.</p>
+    <p><strong>Марибозу</strong> — длинное тело, почти без теней. Сильный импульс в направлении тела.</p>
+    <p><strong>Повешенный</strong> — как молот, но после роста = медвежий сигнал.</p>
+    <p><strong>Падающая звезда</strong> — как перевёрнутый молот, но после роста = медвежий сигнал.</p>`,
+    questions: [
+      // Назови паттерн (5)
+      {candle:{o:110,c:115,h:120,l:70,bull:true},q:'Маленькое тело сверху, длинная тень снизу, после нисходящего тренда. Это...',
+       a:['Молот','Падающая звезда','Доджи','Марибозу'],correct:0,
+       exp:'Молот! Маленькое тело + длинная нижняя тень (≥2x тело) + после падения = разворот вверх.'},
+      {candle:{o:115,c:110,h:155,l:105,bull:false},q:'Маленькое тело снизу, длинная тень сверху, после роста. Это...',
+       a:['Молот','Падающая звезда','Марибозу','Повешенный'],correct:1,
+       exp:'Падающая звезда! Длинная верхняя тень после роста = медведи отбили быков. Сигнал разворота вниз.'},
+      {candle:{o:90,c:155,h:158,l:88,bull:true},q:'Длинное зелёное тело, почти без теней. Это...',
+       a:['Молот','Доджи','Марибозу бычья','Повешенный'],correct:2,
+       exp:'Бычья марибозу! Длинное тело без теней = покупатели полностью контролировали период. Сильный сигнал.'},
+      {candle:{o:155,c:90,h:158,l:88,bull:false},q:'Длинное красное тело, почти без теней. Что это?',
+       a:['Бычья марибозу','Медвежья марибозу','Молот','Доджи'],correct:1,
+       exp:'Медвежья марибозу! Продавцы полностью захватили период. Нет теней = нет сопротивления.'},
+      {candle:{o:110,c:115,h:120,l:70,bull:true},q:'Молот появился после роста цены. Как он называется?',
+       a:['Молот','Повешенный','Перевёрнутый молот','Пинбар'],correct:1,
+       exp:'Повешенный! Та же форма что молот, но после роста = медвежий сигнал. Контекст важен!'},
+      // Что сигнализирует (5)
+      {candle:{o:105,c:110,h:115,l:65,bull:true},q:'Молот после нисходящего тренда сигнализирует...',
+       a:['Продолжение падения','Разворот вверх','Консолидацию','Ничего'],correct:1,
+       exp:'Молот после падения = разворот. Длинная нижняя тень показывает что продавцы исчерпали себя, быки выкупили.'},
+      {candle:{o:110,c:108,h:150,l:105,bull:false},q:'Падающая звезда сигнализирует...',
+       a:['Продолжение роста','Разворот вниз','Нейтралитет','Выход из позиции'],correct:1,
+       exp:'Падающая звезда = разворот вниз. Быки пытались поднять цену но медведи отбили и закрыли низко.'},
+      {candle:{o:90,c:150,h:152,l:88,bull:true},q:'Бычья марибозу в середине роста означает...',
+       a:['Разворот','Продолжение тренда вверх','Флэт','Неопределённость'],correct:1,
+       exp:'Марибозу в тренде = продолжение. Сильный импульс без теней показывает полный контроль покупателей.'},
+      {candle:{o:100,c:100,h:140,l:60,bull:true},q:'Доджи на вершине тренда — это сигнал...',
+       a:['Покупать','Продавать','Возможного разворота — нужно подтверждение','Ничего не делать всегда'],correct:2,
+       exp:'Доджи = нерешительность. На вершине это предупреждение. Жди следующую свечу для подтверждения.'},
+      {candle:{o:110,c:115,h:120,l:70,bull:true},q:'Повешенный (молот после роста) — что делаем?',
+       a:['Покупаем','Готовимся к возможному развороту вниз','Игнорируем','Удваиваем позицию'],correct:1,
+       exp:'Повешенный — предупреждение. Не продаём сразу, но готовимся. Ждём подтверждения следующей свечой.'},
+      // Бычий или медвежий сигнал (5)
+      {candle:{o:105,c:110,h:115,l:65,bull:true},q:'Молот после падения — это сигнал...',
+       a:['🟢 Бычий','🔴 Медвежий','⬜ Нейтральный','❓ Зависит от объёма'],correct:0,
+       exp:'Бычий сигнал! Молот после падения = конец продаж, начало покупок.'},
+      {candle:{o:110,c:108,h:155,l:105,bull:false},q:'Падающая звезда — сигнал...',
+       a:['🟢 Бычий','🔴 Медвежий','⬜ Нейтральный','❓ Неопределённый'],correct:1,
+       exp:'Медвежий! Быки не удержали верха, медведи продавили цену вниз.'},
+      {candle:{o:100,c:145,h:148,l:98,bull:true},q:'Бычья марибозу — сигнал...',
+       a:['🟢 Бычий','🔴 Медвежий','⬜ Нейтральный','Зависит от контекста'],correct:0,
+       exp:'Бычий и очень сильный! Полный контроль покупателей весь период.'},
+      {candle:{o:145,c:100,h:148,l:98,bull:false},q:'Медвежья марибозу — сигнал...',
+       a:['🟢 Бычий','🔴 Медвежий','⬜ Нейтральный','Зависит от тренда'],correct:1,
+       exp:'Медвежий и очень сильный! Продавцы полностью захватили период.'},
+      {candle:{o:100,c:102,h:100,l:60,bull:true},q:'Перевёрнутый молот (маленькое тело снизу, тень сверху) после падения — сигнал...',
+       a:['🔴 Медвежий — продолжение','🟢 Возможно бычий — нужно подтверждение','⬜ Нейтральный','❓ Не определить'],correct:1,
+       exp:'Слабый бычий сигнал. Похож на падающую звезду но появился после падения. Нужна следующая бычья свеча.'},
+      // Контекст (5)
+      {candle:{o:108,c:112,h:118,l:70,bull:true},q:'Молот работает как сигнал разворота ТОЛЬКО когда...',
+       a:['Свеча зелёная','Появляется после нисходящего тренда','Объём высокий','Тень длиннее 3x тела'],correct:1,
+       exp:'Контекст критичен. Молот после роста = повешенный (медвежий). После падения = молот (бычий). Форма одинакова!'},
+      {candle:{o:110,c:108,h:148,l:105,bull:false},q:'Падающая звезда наиболее сильная когда...',
+       a:['Свеча красная','Появляется после роста на уровне сопротивления','Объём низкий','Тело большое'],correct:1,
+       exp:'Идеально: после роста + на уровне сопротивления. Тройное подтверждение — форма + контекст + уровень.'},
+      {candle:{o:90,c:148,h:150,l:88,bull:true},q:'Бычья марибозу сильнее если...',
+       a:['Появляется в боковике','Пробивает уровень сопротивления','Объём ниже среднего','Это первая свеча дня'],correct:1,
+       exp:'Марибозу + пробой уровня = мощный сигнал. Покупатели не просто победили, они пробили важный барьер.'},
+      {candle:{o:100,c:100,h:100,l:60,bull:true},q:'Доджи-надгробие (тело у минимума, длинная тень вверх) сигнализирует...',
+       a:['Разворот вниз','Разворот вверх','Продолжение','Нейтралитет'],correct:0,
+       exp:'Доджи-надгробие = медвежий сигнал. Быки пытались поднять цену но медведи вернули всё назад.'},
+      {candle:{o:100,c:100,h:140,l:100,bull:true},q:'Доджи-стрекоза (тело у максимума, длинная тень вниз) сигнализирует...',
+       a:['Разворот вниз','Разворот вверх','Продолжение падения','Нейтралитет'],correct:1,
+       exp:'Доджи-стрекоза = бычий сигнал. Цена падала но быки вернули её наверх. После нисходящего тренда = разворот.'},
+    ]
+  },
+  {
+    id: 2,
+    name: 'Паттерны нескольких свечей',
+    desc: 'Поглощение, харами, звёзды, три солдата',
+    icon: '🕯️🕯️',
+    color: '#4488ff',
+    xpReward: 200,
+    theory: `<p><strong>Бычье поглощение</strong> — маленькая красная свеча + большая зелёная, которая полностью покрывает её. Разворот вверх.</p>
+    <p><strong>Медвежье поглощение</strong> — маленькая зелёная + большая красная. Разворот вниз.</p>
+    <p><strong>Харами</strong> — большая свеча + маленькая внутри её тела. Нерешительность после тренда.</p>
+    <p><strong>Утренняя звезда</strong> — красная + доджи/маленькая + зелёная. Разворот вверх.</p>
+    <p><strong>Вечерняя звезда</strong> — зелёная + доджи + красная. Разворот вниз.</p>
+    <p><strong>Три белых солдата</strong> — три последовательных зелёных с повышением. Сильный бычий тренд.</p>`,
+    questions: [
+      {pattern:'engulf-bull',q:'Маленькая красная свеча, затем большая зелёная которая её полностью покрывает. Это...',
+       a:['Бычье поглощение','Медвежье поглощение','Харами','Утренняя звезда'],correct:0,
+       exp:'Бычье поглощение! Быки полностью перекрыли продавцов. После падения = сильный разворот вверх.'},
+      {pattern:'engulf-bear',q:'Маленькая зелёная свеча, затем большая красная которая её полностью покрывает. Это...',
+       a:['Бычье поглощение','Медвежье поглощение','Харами','Вечерняя звезда'],correct:1,
+       exp:'Медвежье поглощение! Продавцы перекрыли покупателей. После роста = сильный разворот вниз.'},
+      {pattern:'morning-star',q:'Три свечи: красная → маленькая (доджи) → зелёная. Это...',
+       a:['Вечерняя звезда','Утренняя звезда','Три чёрных вороны','Харами'],correct:1,
+       exp:'Утренняя звезда! Падение → нерешительность → разворот вверх. Один из сильнейших разворотных сигналов.'},
+      {pattern:'evening-star',q:'Три свечи: зелёная → маленькая → красная. Что это?',
+       a:['Утренняя звезда','Вечерняя звезда','Три белых солдата','Бычье поглощение'],correct:1,
+       exp:'Вечерняя звезда! Рост → нерешительность → разворот вниз. После роста = предупреждение о смене тренда.'},
+      {pattern:'three-soldiers',q:'Три последовательных зелёных свечи с повышением. Это...',
+       a:['Три чёрных вороны','Три белых солдата','Бычья марибозу','Утренняя звезда'],correct:1,
+       exp:'Три белых солдата! Три подряд зелёных с закрытием выше предыдущей = сильный восходящий тренд.'},
+      {pattern:'engulf-bull',q:'Бычье поглощение — это сигнал...',
+       a:['🔴 Медвежий','🟢 Бычий','⬜ Нейтральный','❓ Неопределённый'],correct:1,
+       exp:'Бычий! Покупатели полностью перекрыли продавцов.'},
+      {pattern:'harami-bear',q:'Большая зелёная + маленькая красная внутри её тела. Это...',
+       a:['Бычье поглощение','Медвежья харами','Бычья харами','Вечерняя звезда'],correct:1,
+       exp:'Медвежья харами! Маленькая свеча внутри тела предыдущей = нерешительность после роста. Возможный разворот.'},
+      {pattern:'three-crows',q:'Три последовательных красных свечи с понижением — это...',
+       a:['Три белых солдата','Три чёрных вороны','Медвежье поглощение','Вечерняя звезда'],correct:1,
+       exp:'Три чёрных вороны! Три подряд красных = сильный нисходящий тренд. Сигнал продолжения падения.'},
+      {pattern:'engulf-bear',q:'Медвежье поглощение наиболее сильное когда...',
+       a:['Появляется на дне','Появляется на вершине после роста','Обе свечи маленькие','Объём низкий'],correct:1,
+       exp:'На вершине после роста + большой объём = максимальная сила сигнала. Контекст всегда важен.'},
+      {pattern:'morning-star',q:'Для утренней звезды нужно...',
+       a:['Две свечи','Три свечи','Четыре свечи','Одна особая свеча'],correct:1,
+       exp:'Три свечи: падение → пауза (доджи/маленькая) → рост. Пауза показывает что продавцы исчерпались.'},
+      {pattern:'engulf-bull',q:'После бычьего поглощения цена...',
+       a:['Скорее всего пойдёт вниз','Скорее всего пойдёт вверх','Останется на месте','Непредсказуема'],correct:1,
+       exp:'Вверх с высокой вероятностью. Но всегда жди подтверждения — следующая свеча должна быть зелёной.'},
+      {pattern:'harami-bull',q:'Большая красная + маленькая зелёная внутри её тела. После падения это...',
+       a:['Медвежья харами','Бычья харами — возможный разворот','Продолжение падения','Консолидация'],correct:1,
+       exp:'Бычья харами! После падения маленькая свеча внутри большой = продавцы теряют силу. Возможный разворот.'},
+      {pattern:'evening-star',q:'Вечерняя звезда появилась на вершине. Что делаешь?',
+       a:['Покупаешь','Готовишься к шорту или закрываешь лонги','Игнорируешь','Ждёшь ещё 10 свечей'],correct:1,
+       exp:'Готовишься к развороту. Вечерняя звезда + вершина = серьёзный предупреждающий сигнал.'},
+      {pattern:'three-soldiers',q:'Три белых солдата говорят что...',
+       a:['Скоро разворот вниз','Тренд вверх силён, покупатели контролируют','Рынок нерешителен','Объём падает'],correct:1,
+       exp:'Три белых солдата = уверенный восходящий тренд. Покупатели последовательно поднимают цену.'},
+      {pattern:'engulf-bear',q:'Чем больше разница в размере свечей в поглощении, тем сигнал...',
+       a:['Слабее','Сильнее','Одинаков','Не имеет значения'],correct:1,
+       exp:'Сильнее! Если вторая свеча намного больше первой — покупатели/продавцы доминируют с большим перевесом.'},
+      {pattern:'morning-star',q:'Утренняя звезда появилась на уровне поддержки. Это...',
+       a:['Ослабляет сигнал','Усиливает сигнал','Не влияет','Делает его медвежьим'],correct:1,
+       exp:'Усиливает! Паттерн + уровень поддержки = двойное подтверждение. Сигнал намного надёжнее.'},
+    ]
+  },
+  {
+    id: 3,
+    name: 'Графические паттерны',
+    desc: 'Флаг, вымпел, треугольники, голова и плечи',
+    icon: '📈',
+    color: '#a855f7',
+    xpReward: 250,
+    theory: `<p><strong>Флаг</strong> — резкий рост (флагшток) + консолидация в небольшом канале. Продолжение тренда.</p>
+    <p><strong>Вымпел</strong> — флагшток + сужающийся треугольник. Продолжение тренда.</p>
+    <p><strong>Треугольник восходящий</strong> — горизонтальное сопротивление + повышающиеся минимумы. Бычий пробой.</p>
+    <p><strong>Треугольник нисходящий</strong> — горизонтальная поддержка + понижающиеся максимумы. Медвежий пробой.</p>
+    <p><strong>Голова и плечи</strong> — три пика (средний выше). После пробоя шеи — разворот вниз.</p>
+    <p><strong>Двойная вершина/дно</strong> — два одинаковых пика/дна. Разворотный паттерн.</p>`,
+    questions: [
+      {pattern:'flag-bull',q:'Резкий рост вверх, затем небольшой канал с наклоном вниз. Это...',
+       a:['Медвежий флаг','Бычий флаг','Нисходящий треугольник','Клин'],correct:1,
+       exp:'Бычий флаг! Флагшток + наклонная консолидация вниз = подготовка к продолжению роста.'},
+      {pattern:'flag-bear',q:'Резкое падение, затем небольшой канал с наклоном вверх. Это...',
+       a:['Бычий флаг','Медвежий флаг','Восходящий треугольник','Разворот'],correct:1,
+       exp:'Медвежий флаг! После падения небольшой откат вверх = пауза перед продолжением падения.'},
+      {pattern:'pennant',q:'Резкое движение + два сходящихся луча (треугольник). Это...',
+       a:['Флаг','Вымпел','Клин','Прямоугольник'],correct:1,
+       exp:'Вымпел! Флагшток + сужающийся треугольник. Как флаг но треугольной формы. Продолжение тренда.'},
+      {pattern:'triangle-asc',q:'Горизонтальная линия сверху + повышающиеся минимумы снизу. Паттерн...',
+       a:['Нисходящий треугольник','Восходящий треугольник','Симметричный треугольник','Клин'],correct:1,
+       exp:'Восходящий треугольник! Покупатели поднимают минимумы, готовятся пробить сопротивление. Бычий паттерн.'},
+      {pattern:'triangle-desc',q:'Горизонтальная линия снизу + понижающиеся максимумы сверху. Это...',
+       a:['Восходящий треугольник','Нисходящий треугольник','Симметричный треугольник','Флаг'],correct:1,
+       exp:'Нисходящий треугольник! Продавцы снижают максимумы, готовятся пробить поддержку. Медвежий паттерн.'},
+      {pattern:'hs',q:'Три пика — средний самый высокий, два по бокам одинаковой высоты. Это...',
+       a:['Двойная вершина','Тройная вершина','Голова и плечи','Восходящий клин'],correct:2,
+       exp:'Голова и плечи! Классический разворотный паттерн. После пробоя "шеи" (линии между плечами) — разворот вниз.'},
+      {pattern:'double-top',q:'Два пика примерно на одном уровне. Это...',
+       a:['Двойная вершина','Голова и плечи','Двойное дно','Прямоугольник'],correct:0,
+       exp:'Двойная вершина! Цена дважды не смогла пробить уровень. После пробоя поддержки между пиками — разворот.'},
+      {pattern:'double-bottom',q:'Два дна примерно на одном уровне. Это...',
+       a:['Двойная вершина','Двойное дно','Голова и плечи','Нисходящий треугольник'],correct:1,
+       exp:'Двойное дно! Цена дважды отбилась от уровня. После пробоя сопротивления между донами — разворот вверх.'},
+      {pattern:'flag-bull',q:'Бычий флаг — это паттерн...',
+       a:['🔴 Разворота вниз','🟢 Продолжения роста','⬜ Нейтральный','❓ Непредсказуемый'],correct:1,
+       exp:'Продолжение! Флаг = пауза в тренде, рынок "отдыхает" перед следующим движением.'},
+      {pattern:'hs',q:'Голова и плечи — сигнал...',
+       a:['🟢 Продолжения роста','🔴 Разворота вниз','⬜ Консолидации','❓ Зависит от объёма'],correct:1,
+       exp:'Разворот вниз! После пробоя "шеи" цена идёт вниз на расстояние примерно равное высоте "головы".'},
+      {pattern:'triangle-asc',q:'Восходящий треугольник — обычно пробивается...',
+       a:['Вниз','Вверх','В любую сторону поровну','Никогда'],correct:1,
+       exp:'Вверх! В ~70% случаев пробой восходящего треугольника происходит вверх. Покупатели готовились к этому.'},
+      {pattern:'flag-bull',q:'Цель после пробоя бычьего флага примерно равна...',
+       a:['Высоте флага','Длине флагштока','Половине флагштока','Ширине флага'],correct:1,
+       exp:'Длина флагштока! Откладываем флагшток от точки пробоя вверх — это цель движения.'},
+      {pattern:'double-top',q:'Двойная вершина подтверждается когда...',
+       a:['Появляется второй пик','Цена пробивает поддержку между пиками','Объём растёт','Через 10 свечей'],correct:1,
+       exp:'Пробой поддержки (шеи) = подтверждение. До этого паттерн не считается завершённым.'},
+      {pattern:'pennant',q:'Вымпел отличается от флага тем что...',
+       a:['Флагшток длиннее','Консолидация треугольная, а не прямоугольная','Сигнал медвежий','Работает только на росте'],correct:1,
+       exp:'Форма консолидации! Флаг = параллельный канал. Вымпел = сужающийся треугольник. Оба = продолжение.'},
+      {pattern:'triangle-desc',q:'Нисходящий треугольник сломался если...',
+       a:['Пробился вниз','Пробился вверх — это ложный пробой вниз','Объём упал','Прошло много времени'],correct:1,
+       exp:'Пробой вверх нисходящего треугольника = ложный сигнал. Покупатели оказались сильнее. Можно рассмотреть лонг.'},
+    ]
+  },
+  {
+    id: 4,
+    name: 'Поддержка и сопротивление',
+    desc: 'Уровни, пробои, ретесты',
+    icon: '📊',
+    color: '#f5c842',
+    xpReward: 250,
+    theory: `<p><strong>Поддержка</strong> — уровень где покупатели активны и останавливают падение. Цена отбивается вверх.</p>
+    <p><strong>Сопротивление</strong> — уровень где продавцы активны и останавливают рост. Цена отбивается вниз.</p>
+    <p><strong>Пробой</strong> — цена прошла через уровень. Сопротивление становится поддержкой (и наоборот).</p>
+    <p><strong>Ретест</strong> — после пробоя цена возвращается к уровню и снова от него отталкивается.</p>
+    <p>Чем больше раз цена тестировала уровень — тем он сильнее.</p>`,
+    questions: [
+      {pattern:'support',q:'Цена несколько раз падала до одного уровня и отбивалась вверх. Этот уровень — это...',
+       a:['Сопротивление','Поддержка','Нейтральный уровень','Уровень безразличия'],correct:1,
+       exp:'Поддержка! Покупатели активно выкупают на этом уровне, не давая цене идти ниже.'},
+      {pattern:'resistance',q:'Цена несколько раз поднималась до одного уровня и откатывала вниз. Это...',
+       a:['Поддержка','Сопротивление','Зона консолидации','Справедливая цена'],correct:1,
+       exp:'Сопротивление! Продавцы активно продают на этом уровне, не давая цене идти выше.'},
+      {pattern:'breakout',q:'Цена пробила уровень сопротивления вверх. Теперь этот уровень становится...',
+       a:['Всё ещё сопротивлением','Поддержкой','Нейтральным','Исчезает'],correct:1,
+       exp:'Поддержкой! Это называется смена полярности. Бывшее сопротивление = новая поддержка.'},
+      {pattern:'retest',q:'После пробоя сопротивления цена вернулась к нему снизу и снова пошла вверх. Это...',
+       a:['Ложный пробой','Ретест (подтверждение пробоя)','Разворот','Медвежий сигнал'],correct:1,
+       exp:'Ретест! Цена проверяет бывшее сопротивление (теперь поддержку). Успешный ретест = подтверждение пробоя.'},
+      {pattern:'support',q:'Чем больше раз цена тестировала уровень поддержки — тем он...',
+       a:['Слабее','Сильнее','Одинаково','Становится сопротивлением'],correct:1,
+       exp:'Сильнее! Каждое касание подтверждает что на этом уровне есть крупные покупатели.'},
+      {pattern:'breakout',q:'Ложный пробой — это когда...',
+       a:['Цена пробила уровень и ушла','Цена пробила уровень но вернулась обратно','Объём был низкий','Пробой был быстрый'],correct:1,
+       exp:'Ложный пробой = цена "пробила" уровень но не смогла удержаться и вернулась. Часто ловушка для толпы.'},
+      {pattern:'resistance',q:'Пробой сопротивления с большим объёмом — это сигнал...',
+       a:['Слабее обычного','Сильнее обычного','Такой же','Медвежий'],correct:1,
+       exp:'Сильнее! Большой объём на пробое = много участников согласны с движением. Пробой с малым объёмом — подозрительно.'},
+      {pattern:'support',q:'Если цена пробила поддержку вниз, она становится...',
+       a:['Поддержкой','Сопротивлением','Нейтральной зоной','Исчезает'],correct:1,
+       exp:'Сопротивлением! Смена полярности работает в обе стороны. Бывшая поддержка = новое сопротивление.'},
+      {pattern:'retest',q:'Лучшая точка входа в лонг после пробоя сопротивления — это...',
+       a:['Сразу при пробое','На ретесте (возврат к бывшему сопротивлению)','После сильного роста','Никогда'],correct:1,
+       exp:'Ретест! Ждать возврата к уровню = лучшее соотношение риск/прибыль. Стоп под уровень, цель — следующее сопротивление.'},
+      {pattern:'support',q:'Уровень поддержки, тест которого был 5+ раз...',
+       a:['Слабее — скоро пробьётся','Сильнее — много покупателей','Нейтральный','Не имеет значения'],correct:0,
+       exp:'Осторожно! Частые тесты поглощают ордера покупателей. После 4-5 тестов уровень может пробиться. Парадокс!'},
+      {pattern:'resistance',q:'Зона сопротивления — это...',
+       a:['Ровная линия','Диапазон цен где продавцы активны','Одна конкретная цена','Максимум дня'],correct:1,
+       exp:'Зона, а не линия! В реальности уровни — это диапазоны. Ищи зоны где было много реакций, а не точные линии.'},
+      {pattern:'breakout',q:'После пробоя поддержки вниз цель движения примерно...',
+       a:['Случайная','Равна высоте структуры над пробитой поддержкой','Всегда 1%','Равна ATR'],correct:1,
+       exp:'Высота структуры! Если консолидация была 5%, после пробоя ожидай движение ~5%. Простое правило измерения цели.'},
+    ]
+  },
+  {
+    id: 5,
+    name: 'Вход в сделку',
+    desc: 'Риск/прибыль, стоп-лосс, цель',
+    icon: '🎯',
+    color: '#00d48a',
+    xpReward: 300,
+    theory: `<p><strong>Стоп-лосс</strong> — уровень где ты признаёшь что был неправ и выходишь. Ставится за ключевой уровень.</p>
+    <p><strong>Тейк-профит</strong> — цель фиксации прибыли. Ставится на следующем уровне сопротивления.</p>
+    <p><strong>Риск/прибыль (R/R)</strong> — отношение потенциальной прибыли к риску. Минимум 1:2.</p>
+    <p><strong>Размер позиции</strong> — рискуй не более 1-2% депозита в одной сделке.</p>
+    <p>Пример: депозит 100 000₽, риск 1% = 1 000₽ на сделку.</p>`,
+    questions: [
+      {pattern:'rr',q:'Ты входишь в лонг на 100, стоп на 95, цель 115. Соотношение риск/прибыль...',
+       a:['1:1','1:2','1:3','1:5'],correct:2,
+       exp:'R/R = 1:3. Риск = 100-95 = 5. Прибыль = 115-100 = 15. 15/5 = 3. Хорошая сделка!'},
+      {pattern:'rr',q:'Минимально приемлемое соотношение риск/прибыль для большинства трейдеров...',
+       a:['1:1','1:2','1:5','1:10'],correct:1,
+       exp:'1:2 — минимум. При R/R 1:2 можно быть правым лишь в 40% случаев и всё равно быть в прибыли.'},
+      {pattern:'stop',q:'Где ставить стоп-лосс при покупке на поддержке?',
+       a:['Прямо на уровне поддержки','Чуть ниже уровня поддержки','Далеко ниже','На уровне входа'],correct:1,
+       exp:'Чуть ниже поддержки! Если поддержка пробита — твой сценарий не сработал. Стоп = точка где идея ломается.'},
+      {pattern:'rr',q:'Депозит 50 000₽, ты рискуешь 2% на сделку. Максимальный убыток...',
+       a:['500₽','1 000₽','5 000₽','2 000₽'],correct:1,
+       exp:'1 000₽. 50 000 × 2% = 1 000₽. Это максимум что ты теряешь если сделка не сработала.'},
+      {pattern:'entry',q:'Лучшая точка входа в лонг — это...',
+       a:['Покупать после сильного роста на эмоциях','На ретесте поддержки или пробоя','Когда все в соцсетях кричат покупать','На максимуме дня'],correct:1,
+       exp:'Ретест! Покупай после подтверждения — на ретесте поддержки или бывшего сопротивления. Лучше соотношение R/R.'},
+      {pattern:'rr',q:'Ты вошёл в шорт на 200, стоп на 210, цель 170. R/R =',
+       a:['1:2','1:3','1:4','1:1'],correct:1,
+       exp:'R/R = 1:3. Риск = 210-200 = 10. Прибыль = 200-170 = 30. 30/10 = 3.'},
+      {pattern:'stop',q:'Почему НЕ нужно двигать стоп-лосс дальше от входа если цена идёт против тебя?',
+       a:['Правила запрещают','Ты увеличиваешь риск сверх запланированного — это нарушение риск-менеджмента','Брокер не разрешит','Это нормально'],correct:1,
+       exp:'Двигать стоп дальше = увеличивать убыток. Ты уже признал: если цена здесь — идея неправильная. Стоп нельзя трогать.'},
+      {pattern:'entry',q:'Где ставить тейк-профит?',
+       a:['Случайно','На следующем уровне сопротивления','На 1% выше входа всегда','Когда станет страшно'],correct:1,
+       exp:'На следующем уровне сопротивления! Там продавцы будут активны и цена может развернуться.'},
+      {pattern:'rr',q:'R/R 1:1 — это...',
+       a:['Отличная сделка','Приемлемо только при точности >50%','Всегда выгодно','Стандарт в трейдинге'],correct:1,
+       exp:'При R/R 1:1 нужна точность >50% чтобы быть в прибыли. Это сложно. Лучше искать сделки с R/R 1:2 и выше.'},
+      {pattern:'stop',q:'Стоп-лосс нужен чтобы...',
+       a:['Всегда быть в прибыли','Ограничить убыток и сохранить депозит для следующих сделок','Не думать о сделке','Угадать разворот'],correct:1,
+       exp:'Сохранить депозит! Убытки неизбежны. Главное чтобы один убыток не уничтожил счёт. Стоп = защита капитала.'},
+      {pattern:'entry',q:'Входить в сделку против тренда — это...',
+       a:['Всегда хорошо','Рискованнее — нужны очень чёткие сигналы','Всегда плохо','Одинаково'],correct:1,
+       exp:'Рискованнее! Торговать против тренда сложнее. Нужны очень чёткие разворотные паттерны. Новичкам — по тренду.'},
+      {pattern:'rr',q:'Депозит 100 000₽, риск 1%, стоп 5 пунктов. Сколько можно купить лотов?',
+       a:['Сколько хочешь','Рассчитывается через размер позиции: риск/стоп = 1000/5 = 200 единиц','10 лотов всегда','1 лот'],correct:1,
+       exp:'Размер позиции = (депозит × %риска) / стоп в пунктах. 100000×1% = 1000₽ риска. 1000/5 = 200 единиц.'},
+    ]
+  },
+  {
+    id: 6,
+    name: 'Психология трейдера',
+    desc: 'FOMO, жадность, страх, дисциплина',
+    icon: '🧠',
+    color: '#ff4466',
+    xpReward: 300,
+    theory: `<p><strong>FOMO</strong> (страх пропустить) — входишь поздно на эмоциях. Результат: покупаешь на вершине.</p>
+    <p><strong>Жадность</strong> — не фиксируешь прибыль, ждёшь больше. Результат: прибыль превращается в убыток.</p>
+    <p><strong>Страх</strong> — закрываешь прибыльную позицию слишком рано. Результат: недобираешь.</p>
+    <p><strong>Месть рынку</strong> — после убытка входишь сразу снова чтобы "отыграться". Результат: ещё больший убыток.</p>
+    <p><strong>Решение</strong> — торговый план. Записывай точку входа, стоп и цель ДО входа. Следуй плану.</p>`,
+    questions: [
+      {pattern:'psych',q:'Биткоин вырос на 20% за день. Все в соцсетях пишут "лети до луны". Ты...',
+       a:['Покупаешь на всё — поезд уходит!','Анализируешь ситуацию, ищешь вход по плану или пропускаешь','Занимаешь и покупаешь','Продаёшь свои вещи чтобы войти'],correct:1,
+       exp:'FOMO убивает депозиты. Покупать после 20% роста на эйфории = покупать на вершине. Дисциплина важнее эмоций.'},
+      {pattern:'psych',q:'Твоя позиция в +15%, план был зафиксировать на +10%. Ты думаешь "может подрастёт ещё". Это...',
+       a:['Хорошая адаптация','Жадность — отступление от плана','Нормальная корректировка','Профессиональный подход'],correct:1,
+       exp:'Жадность! Ты уже превысил цель, план выполнен. Отступление от плана ради "ещё чуть-чуть" — классическая ловушка.'},
+      {pattern:'psych',q:'После убыточной сделки ты немедленно открываешь новую чтобы "отыграться". Это называется...',
+       a:['Быстрое восстановление','Месть рынку — опасная ошибка','Правильная стратегия','Управление позицией'],correct:1,
+       exp:'Месть рынку! Торговля на эмоциях после убытка = хаотичные входы без анализа. Результат: серия убытков.'},
+      {pattern:'psych',q:'Твой стоп-лосс почти задет. Ты двигаешь его дальше чтобы дать позиции "пространство". Это...',
+       a:['Профессиональный подход','Нарушение риск-менеджмента — увеличиваешь убыток','Нормально в волатильном рынке','Стандартная техника'],correct:1,
+       exp:'Опасно! Двигать стоп дальше = признавать что изначальный анализ был неверен, но продолжать рисковать больше.'},
+      {pattern:'psych',q:'Как бороться с FOMO?',
+       a:['Входить быстрее','Принять что пропустить сделку — нормально, следующая всегда будет','Торговать чаще','Убрать стопы'],correct:1,
+       exp:'Принятие! Возможностей на рынке бесконечно много. Пропустить одну сделку = ничего страшного. Войти по FOMO = риск.'},
+      {pattern:'psych',q:'Серия из 3 убыточных сделок подряд. Правильное действие...',
+       a:['Увеличить размер позиции чтобы быстрее отыграться','Сделать паузу, проанализировать ошибки','Сменить стратегию немедленно','Торговать против своих обычных сигналов'],correct:1,
+       exp:'Пауза + анализ! После серии убытков эмоции на пике. Пауза сохраняет депозит. Анализ даёт понимание ошибок.'},
+      {pattern:'psych',q:'Зачем записывать план сделки ДО входа?',
+       a:['Для отчётности','Чтобы принимать решения на холодную голову, а не на эмоциях в сделке','Это необязательно','Для брокера'],correct:1,
+       exp:'Решения вне рынка — лучшие решения. Когда в позиции — страх и жадность давят. План сделан заранее, ему просто следуешь.'},
+      {pattern:'psych',q:'Позиция в -8%, твой стоп на -10%. Цена немного отскочила. Ты...',
+       a:['Закрываешь в панике','Держишь по плану — стоп не достигнут','Добавляешь к позиции','Молишься'],correct:1,
+       exp:'Держишь по плану! Стоп не достигнут = выход не запланирован. Закрыть в панике = позволить эмоциям управлять.'},
+      {pattern:'psych',q:'Твоя прибыльная позиция начала чуть откатывать. Страх заставляет закрыть. Правильно ли?',
+       a:['Да — лучше синица в руке','Нет — если цель не достигнута и стоп не задет, держи по плану','Зависит от настроения','Всегда закрывай при откате'],correct:1,
+       exp:'Нет! Небольшие откаты нормальны. Закрывать из страха до достижения цели = недобирать прибыль системно.'},
+      {pattern:'psych',q:'Что важнее в трейдинге в долгосрочной перспективе?',
+       a:['Угадать каждую сделку','Дисциплина и риск-менеджмент','Торговать как можно чаще','Найти "святой Грааль"'],correct:1,
+       exp:'Дисциплина! 60% точность + R/R 1:2 = профитная система. Без дисциплины даже лучшая стратегия убьёт депозит.'},
+      {pattern:'psych',q:'Ты видишь "идеальный" сигнал но он не соответствует твоим правилам. Действие...',
+       a:['Входишь — сигнал же идеальный!','Пропускаешь — правила важнее единичных сделок','Консультируешься в чате','Уменьшаешь размер и входишь'],correct:1,
+       exp:'Пропускаешь! Правила = твоя защита. Каждое исключение = начало хаоса. Лучше пропустить сотню сделок чем сломать систему.'},
+      {pattern:'psych',q:'Торговый журнал нужен для...',
+       a:['Показать друзьям','Анализа ошибок и улучшения системы','Налоговой','Это лишнее'],correct:1,
+       exp:'Анализа! Журнал показывает паттерны твоих ошибок. Без записей ты повторяешь одни и те же ошибки снова и снова.'},
+      {pattern:'psych',q:'Лучший способ управлять эмоциями в трейдинге...',
+       a:['Не иметь эмоций','Следовать заранее написанному плану и правилам','Медитировать перед торговлей','Торговать больше'],correct:1,
+       exp:'План и правила! Эмоции будут всегда. Но если у тебя чёткий план — решения уже приняты. Осталось только исполнять.'},
+    ]
+  },
+];
+
+// ══════════════════════════════════════════
+// СОСТОЯНИЕ ИГРЫ
+// ══════════════════════════════════════════
+let state = {
+  xp: 0,
+  streak: 0,
+  bestStreak: 0,
+  levelProgress: LEVELS.map(() => ({ done: false, bestScore: 0 })),
+};
+
+let game = {
+  levelId: 0,
+  questions: [],
+  currentQ: 0,
+  score: 0,
+  answered: false,
+  theoryOpen: false,
+};
+
+// ══════════════════════════════════════════
+// КАРТА УРОВНЕЙ
+// ══════════════════════════════════════════
+function renderMap() {
+  const list = document.getElementById('levels-list');
+  list.innerHTML = LEVELS.map((lv, i) => {
+    const prog = state.levelProgress[i];
+    const unlocked = i === 0 || state.levelProgress[i-1].done;
+    const pct = prog.bestScore > 0 ? Math.round(prog.bestScore / lv.questions.length * 100) : 0;
+    return `
+    <div class="level-card ${unlocked ? 'unlocked' : 'locked'} ${prog.done ? 'completed' : ''}"
+      onclick="${unlocked ? `startLevel(${i})` : ''}">
+      <div class="lv-icon" style="background:${lv.color}22">${lv.icon}</div>
+      <div class="lv-info">
+        <div class="lv-name">${lv.name}</div>
+        <div class="lv-desc">${lv.desc} · ${lv.questions.length} вопросов</div>
+      </div>
+      <div class="lv-right">
+        <div class="lv-status" style="color:${prog.done ? 'var(--bull)' : unlocked ? 'var(--yellow)' : 'var(--sub)'}">
+          ${prog.done ? '✓ Пройден' : unlocked ? '▶ Играть' : '🔒'}
+        </div>
+        <div class="lv-bar">
+          <div class="lv-fill" style="width:${pct}%;background:${lv.color}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('hdr-xp').textContent = state.xp;
+  document.getElementById('hdr-streak').textContent = state.streak;
+}
+
+// ══════════════════════════════════════════
+// ИГРА
+// ══════════════════════════════════════════
+function startLevel(id) {
+  const lv = LEVELS[id];
+  game.levelId = id;
+  game.questions = [...lv.questions].sort(() => Math.random() - .5);
+  game.currentQ = 0;
+  game.score = 0;
+  game.answered = false;
+  game.theoryOpen = false;
+
+  // Стрик-точки
+  const dots = document.getElementById('streak-dots');
+  dots.innerHTML = lv.questions.map((_,i) =>
+    `<div class="sdot" id="sdot-${i}">·</div>`
+  ).join('');
+
+  // Тег уровня
+  const tag = document.getElementById('game-lv-tag');
+  tag.textContent = `Уровень ${id+1}: ${lv.name}`;
+  tag.style.background = lv.color + '22';
+  tag.style.color = lv.color;
+  tag.style.border = `1px solid ${lv.color}44`;
+
+  // Теория
+  document.getElementById('theory-box').innerHTML = lv.theory;
+
+  showScreen('game');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  const q = game.questions[game.currentQ];
+  const total = game.questions.length;
+  game.answered = false;
+  game.theoryOpen = false;
+  document.getElementById('theory-box').className = 'theory-box';
+  document.getElementById('theory-toggle-txt').textContent = 'Показать теорию';
+
+  // Счётчик и прогресс
+  document.getElementById('q-counter').textContent = `${game.currentQ+1} / ${total}`;
+  document.getElementById('q-progress-fill').style.width = `${(game.currentQ / total) * 100}%`;
+
+  // Визуал
+  const visual = document.getElementById('arena-visual');
+  if (q.candle) {
+    visual.innerHTML = drawCandleSVG(q.candle);
+  } else if (q.pattern) {
+    visual.innerHTML = drawPattern(q.pattern);
+  } else {
+    visual.innerHTML = '';
+  }
+
+  // Вопрос
+  document.getElementById('question-text').textContent = q.q;
+
+  // Ответы
+  document.getElementById('answers-grid').innerHTML = q.a.map((a, i) =>
+    `<button class="ans-btn" onclick="answer(${i})">${a}</button>`
+  ).join('');
+
+  // Сброс
+  document.getElementById('result-box').className = 'result-box';
+  document.getElementById('next-btn').className = 'next-btn';
+}
+
+function answer(idx) {
+  if (game.answered) return;
+  game.answered = true;
+  const q = game.questions[game.currentQ];
+  const correct = idx === q.correct;
+
+  document.querySelectorAll('.ans-btn').forEach(b => b.classList.add('disabled'));
+  document.querySelectorAll('.ans-btn')[q.correct].classList.add('correct');
+  if (!correct) document.querySelectorAll('.ans-btn')[idx].classList.add('wrong');
+
+  const dot = document.getElementById('sdot-' + game.currentQ);
+  if (correct) {
+    dot.textContent = '✓'; dot.classList.add('hit');
+    game.score++;
+    state.xp += 10;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+  } else {
+    dot.textContent = '✗'; dot.classList.add('miss');
+    state.streak = 0;
+  }
+  document.getElementById('hdr-xp').textContent = state.xp;
+  document.getElementById('hdr-streak').textContent = state.streak;
+
+  // Показываем лейблы если есть
+  document.querySelectorAll('.clabel').forEach(el => el.style.opacity = '1');
+
+  const rb = document.getElementById('result-box');
+  rb.className = 'result-box show ' + (correct ? 'ok' : 'fail');
+  document.getElementById('result-title').textContent = correct ? '🎯 Правильно!' : '💡 Не совсем...';
+  document.getElementById('result-text').textContent = q.exp;
+
+  const nb = document.getElementById('next-btn');
+  nb.className = 'next-btn show';
+  nb.textContent = game.currentQ < game.questions.length - 1 ? 'Следующий →' : 'Завершить урок 🏁';
+}
+
+function nextQuestion() {
+  game.currentQ++;
+  if (game.currentQ >= game.questions.length) {
+    finishLevel();
+  } else {
+    loadQuestion();
+  }
+}
+
+function finishLevel() {
+  const lv = LEVELS[game.levelId];
+  const total = game.questions.length;
+  const pct = Math.round(game.score / total * 100);
+  const passed = pct >= 60;
+
+  if (passed) {
+    state.levelProgress[game.levelId].done = true;
+    state.xp += lv.xpReward;
+  }
+  if (game.score > (state.levelProgress[game.levelId].bestScore || 0)) {
+    state.levelProgress[game.levelId].bestScore = game.score;
+  }
+
+  document.getElementById('hdr-xp').textContent = state.xp;
+
+  const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '✅' : '📚';
+  const title = pct === 100 ? 'Идеальный результат!' : pct >= 80 ? 'Отлично!' : pct >= 60 ? 'Пройден!' : 'Попробуй ещё раз';
+  const sub = pct >= 60
+    ? `Уровень "${lv.name}" пройден. +${lv.xpReward} XP!`
+    : `Нужно ${60}%+ для прохождения. У тебя ${pct}%. Повтори!`;
+
+  document.getElementById('finish-emoji').textContent = emoji;
+  document.getElementById('finish-title').textContent = title;
+  document.getElementById('finish-sub').textContent = sub;
+  document.getElementById('fs-correct').textContent = `${game.score}/${total}`;
+  document.getElementById('fs-xp').textContent = state.xp;
+  document.getElementById('fs-pct').textContent = pct + '%';
+
+  showScreen('finish');
+}
+
+function restartLevel() { startLevel(game.levelId); }
+function goMap() { renderMap(); showScreen('map'); }
+
+function toggleTheory() {
+  game.theoryOpen = !game.theoryOpen;
+  document.getElementById('theory-box').className = 'theory-box' + (game.theoryOpen ? ' show' : '');
+  document.getElementById('theory-toggle-txt').textContent = game.theoryOpen ? 'Скрыть теорию' : 'Показать теорию';
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// РИСОВАНИЕ СВЕЧЕЙ
+// ══════════════════════════════════════════
+function drawCandleSVG(cfg) {
+  const {o, c, h, l, bull} = cfg;
+  const color = bull ? '#00d48a' : '#ff4466';
+  const W = 80, H = 180;
+  const range = h - l || 1;
+  const pad = 20;
+  const toY = v => H - ((v - l) / range) * (H - pad*2) - pad;
+
+  const bTop    = toY(Math.max(o, c));
+  const bBottom = toY(Math.min(o, c));
+  const bH      = Math.max(bBottom - bTop, 3);
+  const cx      = W / 2;
+
+  const labels = [
+    {label:`Макс ${h}`, y:toY(h), side:'left', color:'#888'},
+    {label:`Закр ${c}`, y:toY(c), side:'right', color},
+    {label:`Откр ${o}`, y:toY(o), side:'right', color},
+    {label:`Мин ${l}`,  y:toY(l), side:'left',  color:'#888'},
+  ];
+
+  const labelsHtml = labels.map(lb => {
+    const x = lb.side === 'left' ? cx - 18 : cx + 18;
+    const anchor = lb.side === 'left' ? 'end' : 'start';
+    return `<text x="${x}" y="${lb.y+4}" font-size="9" fill="${lb.color}" 
+      font-family="JetBrains Mono,monospace" text-anchor="${anchor}" class="clabel" style="opacity:0;transition:opacity .4s">${lb.label}</text>`;
+  }).join('');
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" overflow="visible">
+    <line x1="${cx}" y1="${toY(h)}" x2="${cx}" y2="${bTop}" stroke="${color}" stroke-width="2" opacity=".6"/>
+    <line x1="${cx}" y1="${bBottom}" x2="${cx}" y2="${toY(l)}" stroke="${color}" stroke-width="2" opacity=".6"/>
+    <rect x="${cx-14}" y="${bTop}" width="28" height="${bH}" fill="${color}" rx="2"
+      style="filter:drop-shadow(0 0 8px ${color}66)"/>
+    ${labelsHtml}
+  </svg>`;
+}
+
+// ══════════════════════════════════════════
+// РИСОВАНИЕ ГРАФИЧЕСКИХ ПАТТЕРНОВ
+// ══════════════════════════════════════════
+function drawPattern(type) {
+  const W = 320, H = 160;
+  const g = '#00d48a', r = '#ff4466', s = '#484860';
+
+  const patterns = {
+    'flag-bull': () => {
+      // Флагшток вверх + канал вниз
+      const path = 'M20,140 L80,40 L100,55 L120,45 L140,60 L160,50 L180,65';
+      return `<svg width="${W}" height="${H}"><path d="${path}" fill="none" stroke="${g}" stroke-width="2.5"/>
+        <line x1="80" y1="40" x2="180" y2="55" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <line x1="100" y1="60" x2="200" y2="75" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Бычий флаг</text></svg>`;
+    },
+    'flag-bear': () => {
+      const path = 'M20,20 L80,120 L100,105 L120,115 L140,100 L160,110 L180,95';
+      return `<svg width="${W}" height="${H}"><path d="${path}" fill="none" stroke="${r}" stroke-width="2.5"/>
+        <line x1="80" y1="105" x2="180" y2="90" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <line x1="100" y1="120" x2="200" y2="105" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <text x="30" y="155" fill="${r}" font-size="10" font-family="JetBrains Mono,monospace">Медвежий флаг</text></svg>`;
+    },
+    'pennant': () => {
+      const path = 'M20,130 L80,30 L100,45 L115,40 L125,48 L132,44 L138,50';
+      return `<svg width="${W}" height="${H}"><path d="${path}" fill="none" stroke="${g}" stroke-width="2.5"/>
+        <line x1="80" y1="30" x2="140" y2="48" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <line x1="90" y1="55" x2="140" y2="48" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Вымпел</text></svg>`;
+    },
+    'triangle-asc': () => {
+      return `<svg width="${W}" height="${H}">
+        <line x1="30" y1="55" x2="260" y2="55" stroke="${r}" stroke-width="1.5" stroke-dasharray="4"/>
+        <line x1="30" y1="130" x2="250" y2="60" stroke="${g}" stroke-width="1.5" stroke-dasharray="4"/>
+        <polyline points="30,130 60,100 90,110 120,85 150,95 180,70 210,78 240,57" fill="none" stroke="${g}" stroke-width="2"/>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Восходящий треугольник</text></svg>`;
+    },
+    'triangle-desc': () => {
+      return `<svg width="${W}" height="${H}">
+        <line x1="30" y1="110" x2="260" y2="110" stroke="${g}" stroke-width="1.5" stroke-dasharray="4"/>
+        <line x1="30" y1="30" x2="250" y2="105" stroke="${r}" stroke-width="1.5" stroke-dasharray="4"/>
+        <polyline points="30,30 60,60 90,50 120,75 150,65 180,90 210,82 240,108" fill="none" stroke="${r}" stroke-width="2"/>
+        <text x="30" y="155" fill="${r}" font-size="10" font-family="JetBrains Mono,monospace">Нисходящий треугольник</text></svg>`;
+    },
+    'hs': () => {
+      return `<svg width="${W}" height="${H}">
+        <polyline points="20,120 60,80 90,100 130,30 170,100 200,80 240,120" fill="none" stroke="${r}" stroke-width="2.5"/>
+        <line x1="20" y1="105" x2="250" y2="105" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <text x="55" y="75" fill="${s}" font-size="9" font-family="JetBrains Mono">Л</text>
+        <text x="125" y="25" fill="${s}" font-size="9" font-family="JetBrains Mono">Голова</text>
+        <text x="195" y="75" fill="${s}" font-size="9" font-family="JetBrains Mono">П</text>
+        <text x="30" y="155" fill="${r}" font-size="10" font-family="JetBrains Mono,monospace">Голова и плечи</text></svg>`;
+    },
+    'double-top': () => {
+      return `<svg width="${W}" height="${H}">
+        <polyline points="20,130 70,40 120,100 170,40 220,130" fill="none" stroke="${r}" stroke-width="2.5"/>
+        <line x1="20" y1="100" x2="240" y2="100" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <text x="30" y="155" fill="${r}" font-size="10" font-family="JetBrains Mono,monospace">Двойная вершина</text></svg>`;
+    },
+    'double-bottom': () => {
+      return `<svg width="${W}" height="${H}">
+        <polyline points="20,20 70,110 120,50 170,110 220,20" fill="none" stroke="${g}" stroke-width="2.5"/>
+        <line x1="20" y1="55" x2="240" y2="55" stroke="${s}" stroke-width="1" stroke-dasharray="4"/>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Двойное дно</text></svg>`;
+    },
+    'engulf-bull': () => drawTwoCandles(
+      {o:110,c:90,h:115,l:85,bull:false},
+      {o:85,c:125,h:128,l:82,bull:true}, W, H),
+    'engulf-bear': () => drawTwoCandles(
+      {o:90,c:115,h:118,l:87,bull:true},
+      {o:118,c:80,h:121,l:77,bull:false}, W, H),
+    'morning-star': () => drawThreeCandles(
+      {o:120,c:90,h:124,l:86,bull:false},
+      {o:92,c:88,h:100,l:80,bull:false},
+      {o:90,c:125,h:128,l:87,bull:true}, W, H),
+    'evening-star': () => drawThreeCandles(
+      {o:90,c:120,h:124,l:87,bull:true},
+      {o:118,c:122,h:130,l:112,bull:true},
+      {o:120,c:85,h:123,l:82,bull:false}, W, H),
+    'three-soldiers': () => drawThreeCandles(
+      {o:90,c:110,h:112,l:88,bull:true},
+      {o:108,c:130,h:132,l:106,bull:true},
+      {o:128,c:150,h:153,h2:153,l:126,bull:true}, W, H),
+    'three-crows': () => drawThreeCandles(
+      {o:150,c:130,h:152,l:128,bull:false},
+      {o:132,c:110,h:134,l:108,bull:false},
+      {o:112,c:90,h:114,l:88,bull:false}, W, H),
+    'harami-bear': () => drawTwoCandles(
+      {o:90,c:130,h:134,l:87,bull:true},
+      {o:125,c:110,h:128,l:107,bull:false}, W, H),
+    'harami-bull': () => drawTwoCandles(
+      {o:130,c:90,h:134,l:87,bull:false},
+      {o:95,c:110,h:112,l:92,bull:true}, W, H),
+    'support': () => {
+      return `<svg width="${W}" height="${H}">
+        <polyline points="20,60 50,90 80,50 110,100 140,55 170,100 200,60 230,95 260,50" fill="none" stroke="${g}" stroke-width="2"/>
+        <line x1="20" y1="100" x2="270" y2="100" stroke="${g}" stroke-width="1.5" stroke-dasharray="5"/>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Уровень поддержки</text></svg>`;
+    },
+    'resistance': () => {
+      return `<svg width="${W}" height="${H}">
+        <polyline points="20,110 50,80 80,120 110,70 140,110 170,65 200,105 230,60 260,100" fill="none" stroke="${r}" stroke-width="2"/>
+        <line x1="20" y1="60" x2="270" y2="60" stroke="${r}" stroke-width="1.5" stroke-dasharray="5"/>
+        <text x="30" y="155" fill="${r}" font-size="10" font-family="JetBrains Mono,monospace">Уровень сопротивления</text></svg>`;
+    },
+    'breakout': () => {
+      return `<svg width="${W}" height="${H}">
+        <line x1="20" y1="80" x2="200" y2="80" stroke="${r}" stroke-width="1.5" stroke-dasharray="4"/>
+        <polyline points="20,130 60,100 100,110 140,85 170,80" fill="none" stroke="${g}" stroke-width="2"/>
+        <polyline points="170,80 200,50 240,30" fill="none" stroke="${g}" stroke-width="2.5"/>
+        <circle cx="170" cy="80" r="5" fill="${g}"/>
+        <text x="175" y="75" fill="${g}" font-size="9" font-family="JetBrains Mono">Пробой!</text>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Пробой сопротивления</text></svg>`;
+    },
+    'retest': () => {
+      return `<svg width="${W}" height="${H}">
+        <line x1="20" y1="80" x2="280" y2="80" stroke="${s}" stroke-width="1.5" stroke-dasharray="4"/>
+        <polyline points="20,130 70,80 100,55 130,85 160,80 190,60 230,35" fill="none" stroke="${g}" stroke-width="2"/>
+        <circle cx="160" cy="80" r="4" fill="${g}"/>
+        <text x="135" y="100" fill="${g}" font-size="9" font-family="JetBrains Mono">ретест</text>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Ретест после пробоя</text></svg>`;
+    },
+    'rr': () => {
+      return `<svg width="${W}" height="${H}">
+        <line x1="20" y1="50" x2="280" y2="50" stroke="${g}" stroke-width="1.5" stroke-dasharray="4"/>
+        <line x1="20" y1="90" x2="280" y2="90" stroke="${s}" stroke-width="1.5"/>
+        <line x1="20" y1="120" x2="280" y2="120" stroke="${r}" stroke-width="1.5" stroke-dasharray="4"/>
+        <rect x="20" y="50" width="8" height="40" fill="${g}" opacity=".3"/>
+        <rect x="20" y="90" width="8" height="30" fill="${r}" opacity=".3"/>
+        <text x="35" y="75" fill="${g}" font-size="10" font-family="JetBrains Mono">Цель +20</text>
+        <text x="35" y="108" fill="${s}" font-size="10" font-family="JetBrains Mono">Вход</text>
+        <text x="35" y="138" fill="${r}" font-size="10" font-family="JetBrains Mono">Стоп −10</text>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Риск/прибыль 1:2</text></svg>`;
+    },
+    'stop': () => {
+      return `<svg width="${W}" height="${H}">
+        <line x1="20" y1="40" x2="280" y2="40" stroke="${g}" stroke-width="1.5" stroke-dasharray="4"/>
+        <line x1="20" y1="80" x2="280" y2="80" stroke="${s}" stroke-width="1.5"/>
+        <line x1="20" y1="110" x2="280" y2="110" stroke="${r}" stroke-width="1.5" stroke-dasharray="4"/>
+        <text x="30" y="35" fill="${g}" font-size="10" font-family="JetBrains Mono">Тейк-профит</text>
+        <text x="30" y="75" fill="${s}" font-size="10" font-family="JetBrains Mono">Точка входа</text>
+        <text x="30" y="125" fill="${r}" font-size="10" font-family="JetBrains Mono">Стоп-лосс</text>
+        <text x="30" y="155" fill="${s}" font-size="10" font-family="JetBrains Mono,monospace">Структура сделки</text></svg>`;
+    },
+    'entry': () => {
+      return `<svg width="${W}" height="${H}">
+        <polyline points="20,120 60,90 100,100 140,70 160,80 180,65 210,68" fill="none" stroke="${g}" stroke-width="2"/>
+        <circle cx="180" cy="65" r="6" fill="${g}" opacity=".8"/>
+        <text x="185" y="60" fill="${g}" font-size="9" font-family="JetBrains Mono">Вход</text>
+        <line x1="160" y1="80" x2="280" y2="80" stroke="${s}" stroke-width="1" stroke-dasharray="3"/>
+        <text x="30" y="155" fill="${g}" font-size="10" font-family="JetBrains Mono,monospace">Точка входа</text></svg>`;
+    },
+    'psych': () => {
+      return `<svg width="${W}" height="${H}">
+        <text x="100" y="60" font-size="40" text-anchor="middle" dominant-baseline="middle">🧠</text>
+        <text x="100" y="100" fill="#a855f7" font-size="11" text-anchor="middle" font-family="Space Grotesk,sans-serif">Психология трейдера</text>
+        <text x="100" y="120" fill="#484860" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Эмоции vs Дисциплина</text>
+      </svg>`;
+    },
+  };
+
+  return `<div style="width:100%;display:flex;justify-content:center">${(patterns[type] || patterns['support'])()}</div>`;
+}
+
+function drawTwoCandles(c1, c2, W, H) {
+  const allPrices = [c1.o,c1.c,c1.h,c1.l,c2.o,c2.c,c2.h,c2.l];
+  const min = Math.min(...allPrices), max = Math.max(...allPrices);
+  const range = max - min || 1;
+  const pad = 15;
+  const toY = v => H - ((v - min) / range) * (H - pad*2) - pad;
+  const col1 = c1.bull ? '#00d48a' : '#ff4466';
+  const col2 = c2.bull ? '#00d48a' : '#ff4466';
+  const cx1 = W/2 - 35, cx2 = W/2 + 35;
+
+  const candle = (cx, c, col) => {
+    const bTop = toY(Math.max(c.o,c.c)), bBot = toY(Math.min(c.o,c.c));
+    const bH = Math.max(bBot-bTop, 3);
+    return `<line x1="${cx}" y1="${toY(c.h)}" x2="${cx}" y2="${bTop}" stroke="${col}" stroke-width="1.5" opacity=".6"/>
+    <line x1="${cx}" y1="${bBot}" x2="${cx}" y2="${toY(c.l)}" stroke="${col}" stroke-width="1.5" opacity=".6"/>
+    <rect x="${cx-14}" y="${bTop}" width="28" height="${bH}" fill="${col}" rx="2" style="filter:drop-shadow(0 0 6px ${col}66)"/>`;
+  };
+
+  return `<svg width="${W}" height="${H}">${candle(cx1,c1,col1)}${candle(cx2,c2,col2)}</svg>`;
+}
+
+function drawThreeCandles(c1, c2, c3, W, H) {
+  const all = [c1,c2,c3].flatMap(c=>[c.o,c.c,c.h,c.l]);
+  const min = Math.min(...all), max = Math.max(...all);
+  const range = max - min || 1;
+  const pad = 15;
+  const toY = v => H - ((v-min)/range)*(H-pad*2) - pad;
+  const positions = [W/2-55, W/2, W/2+55];
+
+  const candle = (cx, c) => {
+    const col = c.bull ? '#00d48a' : '#ff4466';
+    const bTop = toY(Math.max(c.o,c.c)), bBot = toY(Math.min(c.o,c.c));
+    const bH = Math.max(bBot-bTop, 3);
+    return `<line x1="${cx}" y1="${toY(c.h)}" x2="${cx}" y2="${bTop}" stroke="${col}" stroke-width="1.5" opacity=".6"/>
+    <line x1="${cx}" y1="${bBot}" x2="${cx}" y2="${toY(c.l)}" stroke="${col}" stroke-width="1.5" opacity=".6"/>
+    <rect x="${cx-13}" y="${bTop}" width="26" height="${bH}" fill="${col}" rx="2" style="filter:drop-shadow(0 0 5px ${col}55)"/>`;
+  };
+
+  return `<svg width="${W}" height="${H}">${[c1,c2,c3].map((c,i)=>candle(positions[i],c)).join('')}</svg>`;
+}
+
+// ══ СТАРТ ══
+renderMap();
+</script>
+</body>
+</html>
