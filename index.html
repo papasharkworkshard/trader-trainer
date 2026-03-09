@@ -161,6 +161,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   .answers{grid-template-columns:1fr}
   .finish-stats{gap:16px}
 }
+
+/* Онбординг */
+.onb-step { display:none }
+.onb-step.active { display:block; animation: fadeUp .3s ease }
+.onb-dot {
+  width:8px; height:8px; border-radius:50%;
+  background:var(--border); cursor:pointer; transition:all .2s;
+}
+.onb-dot.active { background:var(--bull); width:20px; border-radius:4px; }
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px) }
+  to   { opacity:1; transform:translateY(0) }
+}
 </style>
 </head>
 <body>
@@ -173,8 +186,182 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
   </div>
 </header>
 
+<!-- ══ ЛЕНДИНГ ══ -->
+<div class="screen active" id="screen-landing">
+<div style="max-width:560px;margin:0 auto;padding:40px 20px 60px;text-align:center">
+
+  <!-- Лого -->
+  <div style="font-size:44px;margin-bottom:16px">📈</div>
+  <div style="font-size:36px;font-weight:800;color:var(--white);letter-spacing:-1px;margin-bottom:10px;line-height:1.1">
+    Trade<span style="color:var(--bull)">Up</span>
+  </div>
+  <div style="font-size:16px;color:var(--sub);line-height:1.7;margin-bottom:36px;max-width:400px;margin-left:auto;margin-right:auto">
+    Тренажёр для тех кто хочет научиться читать графики и принимать решения как трейдер — без риска потерять деньги
+  </div>
+
+  <!-- Проблемы -->
+  <div style="text-align:left;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);margin-bottom:16px">Знакомо?</div>
+    <div style="display:grid;gap:12px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:18px;flex-shrink:0">😵</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px">Смотришь на график — и ничего не понимаешь</div>
+          <div style="font-size:12px;color:var(--sub)">Свечи, линии, паттерны сливаются в кашу</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:18px;flex-shrink:0">📚</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px">Читал теорию, но на практике не применяешь</div>
+          <div style="font-size:12px;color:var(--sub)">Знать и уметь — разные вещи</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:18px;flex-shrink:0">💸</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px">Боишься входить на реальные деньги без уверенности</div>
+          <div style="font-size:12px;color:var(--sub)">Страх ошибиться парализует</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Решение -->
+  <div style="text-align:left;background:rgba(0,212,138,.05);border:1px solid rgba(0,212,138,.2);border-radius:16px;padding:24px;margin-bottom:32px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--bull);margin-bottom:16px">Что даёт TradeUp</div>
+    <div style="display:grid;gap:12px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,212,138,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🕯️</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px">7 уровней от нуля до реальной торговли</div>
+          <div style="font-size:12px;color:var(--sub)">Свечи → паттерны → графические фигуры → вход в сделку</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,212,138,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🔁</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px">135 вопросов с повторением</div>
+          <div style="font-size:12px;color:var(--sub)">Каждый концепт встречается несколько раз в разной форме — так запоминается</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,212,138,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💡</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px">Объяснение после каждого ответа</div>
+          <div style="font-size:12px;color:var(--sub)">Не просто правильно/неправильно — понимаешь почему</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,212,138,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🛡️</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:2px">Без реальных денег и риска</div>
+          <div style="font-size:12px;color:var(--sub)">Тренируйся сколько угодно — ошибки здесь ничего не стоят</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кто это для -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:32px;text-align:left">
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);margin-bottom:12px">Для кого</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text)">👶 Полный новичок</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text)">📖 Читал теорию но не торговал</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text)">📉 Торгую но сливаю</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text)">🧠 Хочу систематизировать знания</div>
+    </div>
+  </div>
+
+  <button onclick="showOnboarding()" style="width:100%;padding:18px;background:var(--bull);color:#000;font-size:16px;font-weight:700;font-family:'Space Grotesk',sans-serif;border:none;border-radius:14px;cursor:pointer;letter-spacing:.3px;transition:opacity .15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+    Начать бесплатно →
+  </button>
+  <div style="font-size:11px;color:var(--sub);margin-top:10px">Без регистрации · Бесплатно · Прямо сейчас</div>
+
+</div>
+</div>
+
+<!-- ══ ОНБОРДИНГ ══ -->
+<div class="screen" id="screen-onboard">
+<div style="max-width:480px;margin:0 auto;padding:48px 20px 60px">
+
+  <div id="onb-steps">
+
+    <!-- Шаг 1 -->
+    <div class="onb-step active" data-step="0">
+      <div style="font-size:52px;text-align:center;margin-bottom:20px">🕯️</div>
+      <div style="font-size:24px;font-weight:700;color:var(--white);text-align:center;letter-spacing:-.5px;margin-bottom:12px">Начнём с основ</div>
+      <div style="font-size:14px;color:var(--sub);text-align:center;line-height:1.7;margin-bottom:32px">
+        Всё начинается со свечей. Японская свеча — базовый кирпич любого графика. После первого уровня ты будешь читать их как текст.
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:28px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <div style="font-size:22px">📈</div>
+          <div style="font-size:13px;color:var(--text);font-weight:500">Каждый уровень строится на предыдущем</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:22px">🔒</div>
+          <div style="font-size:13px;color:var(--text);font-weight:500">Следующий открывается после прохождения на 60%+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Шаг 2 -->
+    <div class="onb-step" data-step="1">
+      <div style="font-size:52px;text-align:center;margin-bottom:20px">🎮</div>
+      <div style="font-size:24px;font-weight:700;color:var(--white);text-align:center;letter-spacing:-.5px;margin-bottom:12px">Как это работает</div>
+      <div style="font-size:14px;color:var(--sub);text-align:center;line-height:1.7;margin-bottom:32px">
+        Видишь свечу или график → выбираешь ответ → получаешь объяснение. Теорию можно открыть прямо во время вопроса.
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:28px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <div style="font-size:22px">💡</div>
+          <div style="font-size:13px;color:var(--text);font-weight:500">Объяснение есть к каждому ответу — правильному и нет</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:22px">⚡</div>
+          <div style="font-size:13px;color:var(--text);font-weight:500">XP за правильные ответы, стрик за серию</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Шаг 3 -->
+    <div class="onb-step" data-step="2">
+      <div style="font-size:52px;text-align:center;margin-bottom:20px">🏆</div>
+      <div style="font-size:24px;font-weight:700;color:var(--white);text-align:center;letter-spacing:-.5px;margin-bottom:12px">Цель — уверенность</div>
+      <div style="font-size:14px;color:var(--sub);text-align:center;line-height:1.7;margin-bottom:32px">
+        После всех 7 уровней ты будешь видеть на графике паттерны, понимать куда идёт цена и как войти в сделку с нормальным риск-менеджментом.
+      </div>
+      <div style="background:rgba(0,212,138,.06);border:1px solid rgba(0,212,138,.2);border-radius:12px;padding:18px;margin-bottom:28px">
+        <div style="font-size:13px;color:var(--bull);font-weight:600;margin-bottom:8px">Что будешь уметь после прохождения:</div>
+        <div style="font-size:12px;color:var(--sub);line-height:1.8">
+          ✓ Читать японские свечи и паттерны<br>
+          ✓ Распознавать фигуры на графике<br>
+          ✓ Определять уровни поддержки и сопротивления<br>
+          ✓ Рассчитывать риск и размер позиции<br>
+          ✓ Контролировать эмоции в сделке
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Навигация онбординга -->
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <button id="onb-back" onclick="onbStep(-1)" style="background:none;border:1px solid var(--border);color:var(--sub);padding:12px 20px;border-radius:10px;font-family:'Space Grotesk',sans-serif;font-size:14px;cursor:pointer;display:none">← Назад</button>
+    <div style="display:flex;gap:6px;margin:0 auto" id="onb-dots-nav">
+      <div class="onb-dot active" data-d="0"></div>
+      <div class="onb-dot" data-d="1"></div>
+      <div class="onb-dot" data-d="2"></div>
+    </div>
+    <button id="onb-next" onclick="onbStep(1)" style="background:var(--bull);color:#000;border:none;padding:12px 24px;border-radius:10px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;cursor:pointer">Далее →</button>
+  </div>
+
+</div>
+</div>
+
 <!-- ══ КАРТА УРОВНЕЙ ══ -->
-<div class="screen active" id="screen-map">
+<div class="screen" id="screen-map">
 <div class="map-wrap">
   <div class="map-title">Твой путь трейдера</div>
   <div class="map-sub">Пройди все уровни — от свечей до реальных сделок</div>
@@ -865,6 +1052,38 @@ function toggleTheory() {
   document.getElementById('theory-toggle-txt').textContent = game.theoryOpen ? 'Скрыть теорию' : 'Показать теорию';
 }
 
+// ══ ЛЕНДИНГ / ОНБОРДИНГ ══
+let onbCurrent = 0;
+const ONB_TOTAL = 3;
+
+function showOnboarding() {
+  showScreen('onboard');
+  onbCurrent = 0;
+  updateOnb();
+}
+
+function onbStep(dir) {
+  onbCurrent += dir;
+  if (onbCurrent >= ONB_TOTAL) {
+    showScreen('map');
+    renderMap();
+    return;
+  }
+  if (onbCurrent < 0) onbCurrent = 0;
+  updateOnb();
+}
+
+function updateOnb() {
+  document.querySelectorAll('.onb-step').forEach((el, i) => {
+    el.className = 'onb-step' + (i === onbCurrent ? ' active' : '');
+  });
+  document.querySelectorAll('.onb-dot').forEach((el, i) => {
+    el.className = 'onb-dot' + (i === onbCurrent ? ' active' : '');
+  });
+  document.getElementById('onb-back').style.display = onbCurrent > 0 ? 'block' : 'none';
+  document.getElementById('onb-next').textContent = onbCurrent === ONB_TOTAL - 1 ? '🚀 Начать' : 'Далее →';
+}
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
@@ -1115,7 +1334,7 @@ function drawThreeCandles(c1, c2, c3, W, H) {
 }
 
 // ══ СТАРТ ══
-renderMap();
+showScreen('landing');
 </script>
 </body>
 </html>
